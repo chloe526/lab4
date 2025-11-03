@@ -11,18 +11,19 @@ class BTNode():
     left: BinTree
     right: BinTree
 
+@dataclass(frozen=True)
 class BST:
     comes_before : Callable[[Any,Any],bool]
     tree : BinTree
 
 # returns true if 'tree' is empty, false otherwise
 def is_empty(tree : BST) -> bool:
-    if tree is None:
+    if tree.tree is None:
         return True
-    return False 
+    return False
 
 # returns BST with 'val' added to 'tree' 
-def helper_insert(tree : BinTree, new_val: Any, comes_before : Callable[[Any,Any],bool]) -> BST:
+def helper_insert(tree : BinTree, new_val: Any, comes_before : Callable[[Any,Any],bool]) -> BinTree:
     match tree:
         case None:
             return BTNode(new_val, None, None)
@@ -33,9 +34,9 @@ def helper_insert(tree : BinTree, new_val: Any, comes_before : Callable[[Any,Any
                 return BTNode(v, l, helper_insert(r, new_val, comes_before))
 
 def insert(tree_input : BST, val: Any) -> BST:
-    return helper_insert(tree_input.tree, val, tree_input.comes_before) 
+    return BST(tree_input.comes_before, helper_insert(tree_input.tree, val, tree_input.comes_before))
         
-def helper_lookup(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any], bool]):
+def helper_lookup(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any], bool]) -> bool:
     match tree:
         case None:
             return False
@@ -49,9 +50,9 @@ def helper_lookup(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any
 
 # returns True if 'val' already in 'BST', False if not
 def lookup(tree_input : BST, val: Any) -> bool:
-    helper_lookup(tree_input.tree, val, tree_input.comes_before)
+    return helper_lookup(tree_input.tree, val, tree_input.comes_before)
 
-def highest_value( bst : BST ) -> int:
+def highest_value( bst : BinTree ) -> int:
     match bst:
         case None:
             raise ValueError( "Called on empty bst." )
@@ -62,7 +63,7 @@ def highest_value( bst : BST ) -> int:
                 return highest_value( r )
 
 # Delete the highest value from non-empty 'bst'.
-def delete_highest_value( bst : BST ) -> BST:
+def delete_highest_value( bst : BinTree ) -> BinTree:
     match bst:
         case None:
             raise ValueError( "Called on empty bst." )
@@ -72,7 +73,7 @@ def delete_highest_value( bst : BST ) -> BST:
             else:
                 return BTNode( v, l, delete_highest_value( r ) )
 
-def delete_root( bst : BST ) -> BST:
+def delete_root( bst : BinTree ) -> BinTree:
     match bst:
         case None:
             return None
@@ -84,7 +85,7 @@ def delete_root( bst : BST ) -> BST:
                 new_left_subtree : BST = delete_highest_value( l )
                 return BTNode( left_max, new_left_subtree, r )  
 
-def helper_delete(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any], bool]) -> BST:
+def helper_delete(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any], bool]) -> BinTree:
     match tree:
         case None:
             return tree
@@ -94,11 +95,11 @@ def helper_delete(tree: BinTree, new_val: Any, comes_before : Callable[[Any, Any
             if comes_before(new_val, v): #new_val comes before v
                 return BTNode(v, helper_delete(l, new_val, comes_before), r)
             if comes_before(v, new_val):
-                return BTNode(v, l, helper_lookup(r, new_val, comes_before))
+                return BTNode(v, l, helper_delete(r, new_val, comes_before))
 
 # removes 'val' from 'BST
 def delete(tree_input: BST, val: Any) -> BST:
     if lookup(tree_input, val):
-        return helper_delete(tree_input.tree, val, tree_input.comes_before)
+        return BST(tree_input.comes_before, helper_delete(tree_input.tree, val, tree_input.comes_before))
     else:
         return tree_input 
